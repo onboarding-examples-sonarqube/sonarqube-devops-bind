@@ -1,0 +1,40 @@
+name: SonarQube Repository Integration
+
+on:
+  workflow_dispatch:  # Allow manual triggering
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/sonarqube-integration.yml'
+
+jobs:
+  sonarqube-integration:
+    name: Add Repository to SonarQube
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up sonarqube integration script
+        run: |
+          curl -s https://raw.githubusercontent.com/your-org/sonarqube-devops-bind/main/sonarqube-server/github/github-action.sh -o sonarqube-integration.sh
+          chmod +x sonarqube-integration.sh
+      
+      # Alternative: If you have the script in your repo
+      # - name: Make integration script executable
+      #   run: chmod +x ./.github/scripts/sonarqube-integration.sh
+      
+      - name: Add repository to SonarQube
+        id: sonarqube
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ALM_KEY: ${{ secrets.SONAR_ALM_KEY }}
+          # GITHUB_REPOSITORY is available by default
+          # SONAR_PROJECT_KEY: custom-project-key # Optional - uncomment to override default
+          # SONAR_PROJECT_NAME: "Custom Project Name" # Optional - uncomment to override default 
+        run: ./sonarqube-integration.sh
+      
+      - name: Display SonarQube Project Key
+        run: echo "SonarQube Project Key = ${{ steps.sonarqube.outputs.sonar_project_key }}"
